@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'suppliers.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         # Replace this value with your local database's connection string.
-        default='postgresql://postgres:postgres@localhost:5432/suppliers_db',
+        default='postgresql://postgres:postgres@localhost:5432/suppliers',
         conn_max_age=600
     )
 }
