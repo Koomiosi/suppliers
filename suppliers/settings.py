@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'suppliers.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-
+'''
 # Perus SQLite
 DATABASES = {
     'default': {
@@ -85,9 +85,9 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-
 '''
+
+
 # Render käytössä
 DATABASES = {
     'default': dj_database_url.config(
@@ -96,7 +96,8 @@ DATABASES = {
         ssl_require=True  # tärkeä Renderissä, koska PostgreSQL vaatii SSL:n
     )
 }
-'''
+
+
 '''
 # Lokaali PostgreSQL
 DATABASES = {
