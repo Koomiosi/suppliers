@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Supplier, Product
+from .models import Supplier, Product, Customer
 from django.contrib.auth import authenticate, login, logout
 
 #Landing after login
@@ -130,3 +130,43 @@ def searchsupplier(request):
         filtered = Supplier.objects.filter(companyname__icontains=search)
         context = {'suppliers': filtered}
         return render(request, 'supplierslist.html', context)
+    
+# Customers views
+
+def customerslistview(request):
+    if not request.user.is_authenticated:
+        return render(request,'loginpage.html')
+    else:
+        customerlist = Customer.objects.all()
+        context = {'customers': customerlist}
+        return render(request, 'customers.html', context)
+
+def addcustomer(request):
+    if not request.user.is_authenticated:
+        return render(request,'loginpage.html')
+    else:
+        a = request.POST['customername']
+        b = request.POST['companyname']
+        c = request.POST['contactname']
+        d = request.POST['address']
+        e = request.POST['phone']
+        f = request.POST['email']
+        g = request.POST['country']
+        Customer(customername = a, companyname = b, contactname = c, address = d, phone = e, email = f, country = g).save()
+        return redirect(request.META['HTTP_REFERER'])
+    
+def searchcustomer(request):
+    if not request.user.is_authenticated:
+        return render(request,'loginpage.html')
+    else:
+        search = request.POST['search']
+        filtered = Customer.objects.filter(companyname__icontains=search)
+        context = {'customers': filtered}
+        return render(request, 'customers.html', context)
+    
+def deletecustomer(request, id):
+    if not request.user.is_authenticated:
+        return render(request,'loginpage.html')
+    else:  
+        Customer.objects.get(id=id).delete()
+        return redirect('customerslistview')

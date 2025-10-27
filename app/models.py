@@ -20,3 +20,12 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.productname} produced by {self.supplier.companyname}"
+    
+class Customer(models.Model):
+    customername = models.CharField(max_length=100, default='asiakas')
+    customerfname = models.CharField(max_length=50, default='etunimi')
+    customerlname = models.CharField(max_length=50, default='sukunimi')
+    contactname = models.CharField(max_length=100, default='yhteyshenkilo')
+    address = models.CharField(max_length=200, default='osoite')
+    phone = models.CharField(max_length=20, default='puhelin')
+    email = models.EmailField(max_length=100, default='sahkoposti@esimerkki.com')
