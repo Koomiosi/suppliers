@@ -1,0 +1,15 @@
+{% extends "index.html" %}
+
+{% block content %}
+    <h1>Customer Delete</h1>
+
+    <div class="card" style="width: 50 rem;">
+        <div class="card-body">
+            <h3 class="card-title">Confirm Customer Deletion</h3>
+            <h5 class="card-text">Customer: {{ customer.customerfname }} {{ customer.customerlname }}</h5>
+
+            <a href="/customers/" class="btn btn-primary">Back</a>
+            <a href="/delete-customer/{{ customer.id }}/" class="btn btn-danger">Delete</a>
+        </div>
+    </div>
+{% endblock %}

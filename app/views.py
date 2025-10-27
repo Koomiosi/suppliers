@@ -145,14 +145,13 @@ def addcustomer(request):
     if not request.user.is_authenticated:
         return render(request,'loginpage.html')
     else:
-        a = request.POST['customername']
-        b = request.POST['companyname']
-        c = request.POST['contactname']
-        d = request.POST['address']
-        e = request.POST['phone']
-        f = request.POST['email']
-        g = request.POST['country']
-        Customer(customername = a, companyname = b, contactname = c, address = d, phone = e, email = f, country = g).save()
+        a = request.POST['customerfname']
+        b = request.POST['customerlname']
+        c = request.POST['address']
+        d = request.POST['phone']
+        e = request.POST['email']
+        f = request.POST['country']
+        Customer(customerfname = a, customerlname = b, address = c, phone = d, email = e, country = f).save()
         return redirect(request.META['HTTP_REFERER'])
     
 def searchcustomer(request):
@@ -170,3 +169,11 @@ def deletecustomer(request, id):
     else:  
         Customer.objects.get(id=id).delete()
         return redirect('customerslistview')
+
+def confirmdeletecustomer(request, id):
+    if not request.user.is_authenticated:
+        return render(request,'loginpage.html')
+    else:
+        customer = Customer.objects.get(id=id)
+        context = {'customer': customer}
+        return render(request, 'confirmdelcust.html', context)
