@@ -1,0 +1,111 @@
+{% extends 'index.html' %}
+{% block content %}
+<br />
+
+<div id="add-div"></div>
+<br />
+
+<h1>Orders</h1>
+
+<a onclick="showaddform()" class="btn btn-primary">Add new order</a>
+
+{% if orders %}
+  {% for order in orders %}
+  <div class="card mb-3" style="width: 50rem;">
+    <div class="card-body">
+      <h3 class="card-title">{{ order.ordernumber }}</h3>
+      <h5 class="card-text">Customer: {{ order.customer }}</h5>
+      <p class="card-text">
+        Order: {{ order.packagesize }} | Unit price: {{ order.unitprice }}
+      </p>
+      <p class="card-text text-success">Units in stock: {{ order.unitsinstock }}</p>
+
+      <a href="{% url 'edit_product_get' order.id %}" class="btn btn-primary">Edit</a>
+      <a href="{% url 'confirm_delete_product' order.id %}" class="btn btn-danger">Delete</a>
+      <a href="{% url 'products_by_supplier' order.supplier.id %}" class="btn btn-secondary">
+        {{ order.supplier.companyname }}’s Products
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="card" style="width: 50rem;">
+    <div class="card-body">
+      <p class="card-text">No products found in the database.</p>
+    </div>
+  </div>
+{% endif %}
+
+
+<script>
+  // JSON-data tuotteista turvallisesti JavaScriptille
+  const products = JSON.parse('{{ products_json|escapejs }}');
+
+  const addFormHTML = `
+    <h2 class="text-warning">Please fill in the form</h2>
+    <div class="card" style="width: 25rem;">
+      <div class="card-body">
+        <form method="post" action="{% url 'addorder' %}">
+          {% csrf_token %}
+
+          <!-- Tuote-dropdown -->
+          <label for="product-select">Select Product</label>
+          <select id="product-select" name="product_id" class="form-select mb-2" onchange="fillProductDetails()" required>
+            <option value="">-- Select a product --</option>
+            ${products.map(p => `<option value="${p.id}">${p.productname}</option>`).join('')}
+          </select>
+
+          <!-- Automaattisesti täytettävät kentät -->
+          <input type="text" id="packagesize" name="packagesize" placeholder="Package size" class="form-control mb-2" readonly required>
+          <input type="number" id="unitprice" name="unitprice" placeholder="Unit price" class="form-control mb-2" readonly required>
+          <input type="number" id="unitsinstock" name="unitsinstock" placeholder="Units in stock" class="form-control mb-2" readonly>
+
+          <!-- Supplier-dropdown -->
+          <label for="supplier">Supplier</label>
+          <select id="supplier" name="supplier" class="form-select mb-3" disabled required>
+            {% for s in suppliers %}
+              <option value="{{ s.id }}">{{ s.companyname }}</option>
+            {% endfor %}
+          </select>
+
+          <input type="submit" value="Confirm" class="btn btn-success btn-sm">
+          <button type="button" onclick="hideAddForm()" class="btn btn-secondary btn-sm">Cancel</button>
+        </form>
+      </div>
+    </div>
+  `;
+
+  // Näyttää lomakkeen
+  function showAddForm() {
+      document.getElementById("add-div").innerHTML = addFormHTML;
+  }
+
+  // Piilottaa lomakkeen
+  function hideAddForm() {
+      document.getElementById("add-div").innerHTML = "";
+  }
+
+  // Täyttää kentät automaattisesti, kun tuotetta valitaan
+  function fillProductDetails() {
+      const select = document.getElementById("product-select");
+      const productId = parseInt(select.value);
+      const product = products.find(p => p.id === productId);
+
+      if (product) {
+          document.getElementById("packagesize").value = product.packagesize;
+          document.getElementById("unitprice").value = product.unitprice;
+          document.getElementById("unitsinstock").value = product.unitsinstock;
+          document.getElementById("supplier").value = product.supplier_id;
+      } else {
+          document.getElementById("packagesize").value = '';
+          document.getElementById("unitprice").value = '';
+          document.getElementById("unitsinstock").value = '';
+          document.getElementById("supplier").value = '';
+      }
+  }
+</script>
+
+
+
+
+{% endblock %}

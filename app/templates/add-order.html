@@ -1,0 +1,75 @@
+{% extends 'index.html' %}
+{% block content %}
+
+<h1>Create Order for {{ customer.customerfname }} {{ customer.customerlname }}</h1>
+
+<div class="card" style="width: 30rem;">
+  <div class="card-body">
+    <form method="post" action="{% url 'addorder' customer.id %}">
+      {% csrf_token %}
+
+      <!-- Tuote -->
+      <label for="product">Product</label>
+      <select id="product" name="product" class="form-select mb-2" onchange="updateProductDetails()" required>
+        <option value="">-- Select product --</option>
+        {% for p in products %}
+          <option value="{{ p.id }}"
+                  data-unitprice="{{ p.unitprice }}"
+                  data-packagesize="{{ p.packagesize }}"
+                  data-unitsinstock="{{ p.unitsinstock }}">
+              {{ p.productname }}
+          </option>
+        {% endfor %}
+      </select>
+      <br>
+      <!-- Pakkauksen koko -->
+      <label>Package size</label>
+      <input type="text" id="packagesize" name="packagesize" class="form-control mb-2" readonly>
+
+      <!-- Hinta -->
+      <label>Unit price (€)</label>
+      <input type="number" id="unitprice" name="unitprice" class="form-control mb-2" readonly>
+
+      <!-- Varastosaldo -->
+      <label>Units in stock</label>
+      <input type="number" id="unitsinstock" name="unitsinstock" class="form-control mb-2" readonly>
+
+      <!-- Määrä -->
+      <label>Quantity</label>
+      <input type="number" id="quantity" name="quantity" class="form-control mb-2" min="1" value="1" onchange="updateSubtotal()" required>
+
+      <!-- Kokonaishinta -->
+      <label>Subtotal (€)</label>
+      <input type="text" id="subtotal" class="form-control mb-3" readonly>
+
+      <button type="submit" class="btn btn-success">Confirm Order</button>
+      <a href="{% url 'customerslistview' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+</div>
+
+<script>
+function updateProductDetails() {
+    const select = document.getElementById('product');
+    const selected = select.options[select.selectedIndex];
+
+    const unitprice = parseFloat(selected.getAttribute('data-unitprice')) || 0;
+    const packagesize = selected.getAttribute('data-packagesize') || '';
+    const unitsinstock = parseInt(selected.getAttribute('data-unitsinstock')) || 0;
+
+    document.getElementById('unitprice').value = unitprice.toFixed(2);
+    document.getElementById('packagesize').value = packagesize;
+    document.getElementById('unitsinstock').value = unitsinstock;
+
+    updateSubtotal();
+}
+
+function updateSubtotal() {
+    const unitprice = parseFloat(document.getElementById('unitprice').value) || 0;
+    const quantity = parseInt(document.getElementById('quantity').value) || 0;
+    const subtotal = unitprice * quantity;
+    document.getElementById('subtotal').value = subtotal.toFixed(2);
+}
+</script>
+
+{% endblock %}

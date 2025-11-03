@@ -1,0 +1,29 @@
+{% extends 'index.html' %}
+{% block content %}
+<h1>Orders</h1>
+
+{% if orders %}
+  {% for order in orders %}
+    <div class="card mb-3" style="width: 50rem;">
+      <div class="card-body">
+        <h4 class="card-title">Order number: {{ order.ordernumber }}</h4>
+        <h5 class="card-text">Customer: {{ order.customer.customerfname }} {{ order.customer.customerlname }}</h5>
+        <p class="card-text">Product: {{ order.product.productname }}</p>
+        <p class="card-text">Packagesize: {{ order.product.packagesize }}</p>
+        <p class="card-text">Unit price: {{ order.unitprice }} $</p>
+        <p class="card-text">Quantity ordered: {{ order.quantity }}</p>
+        <p class="card-text">Total price: {{ order.subtotal }} $</p>
+
+        <p class="card-text text-muted">Supplier: {{ order.product.supplier.companyname }}</p>
+
+        {% if user.is_superuser %}
+        <a href="{% url 'delete_order' order.id %}" class="btn btn-danger btn-sm">Delete</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No orders found.</p>
+{% endif %}
+
+{% endblock %}

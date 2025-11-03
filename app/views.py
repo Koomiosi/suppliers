@@ -1,6 +1,11 @@
-from django.shortcuts import render, redirect
-from .models import Supplier, Product, Customer
+from pyexpat.errors import messages
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Order, Supplier, Product, Customer
 from django.contrib.auth import authenticate, login, logout
+import json, random, string
+from django.db.models import F
+
+
 
 #Landing after login
 
@@ -143,16 +148,32 @@ def customerslistview(request):
 
 def addcustomer(request):
     if not request.user.is_authenticated:
-        return render(request,'loginpage.html')
-    else:
-        a = request.POST['customerfname']
-        b = request.POST['customerlname']
-        c = request.POST['address']
-        d = request.POST['phone']
-        e = request.POST['email']
-        f = request.POST['country']
-        Customer(customerfname = a, customerlname = b, address = c, phone = d, email = e, country = f).save()
-        return redirect(request.META['HTTP_REFERER'])
+        return render(request, 'loginpage.html')
+
+    if request.method == 'POST':
+        a = request.POST.get('customerfname', '').strip()
+        b = request.POST.get('customerlname', '').strip()
+        c = request.POST.get('address', '').strip()
+        d = request.POST.get('phone', '').strip()
+        e = request.POST.get('email', '').strip()
+        f = request.POST.get('country', '').strip()
+
+        # Varmistetaan että etunimi ja sukunimi on annettu
+        if a and b:
+            Customer.objects.create(
+                customerfname=a,
+                customerlname=b,
+                address=c,
+                phone=d,
+                email=e,
+                country=f
+            )
+
+        # Palautetaan aina takaisin samaan sivuun
+        return redirect(request.META.get('HTTP_REFERER', 'customerslistview'))
+
+    # Jos joku menee suoraan /add-customer/ osoitteeseen ilman POST:ia
+    return redirect('customerslistview')
     
 def searchcustomer(request):
     if not request.user.is_authenticated:
@@ -177,3 +198,100 @@ def confirmdeletecustomer(request, id):
         customer = Customer.objects.get(id=id)
         context = {'customer': customer}
         return render(request, 'confirmdelcust.html', context)
+    
+# Orders views
+def order_list(request):
+    if not request.user.is_authenticated:
+        return render(request, 'loginpage.html')
+
+    # Superuser näkee kaikki tilaukset, muut vain omansa
+    if request.user.is_superuser:
+        orders = Order.objects.select_related('product__supplier', 'customer', 'user').all()
+    else:
+        orders = Order.objects.select_related('product__supplier', 'customer', 'user').filter(user=request.user)
+
+    suppliers = Supplier.objects.all()
+    products = Product.objects.all()
+
+    # Muutetaan tuotteet JSONiksi (Decimal -> float)
+    products_json = json.dumps([
+        {
+            'id': p.id,
+            'productname': p.productname,
+            'packagesize': p.packagesize,
+            'unitprice': float(p.unitprice),
+            'unitsinstock': p.unitsinstock,
+            'supplier_id': p.supplier_id
+        } for p in products
+    ])
+
+    context = {
+        'orders': orders,
+        'suppliers': suppliers,
+        'products_json': products_json,
+    }
+
+    return render(request, 'orders.html', context)
+
+def addorder(request, customer_id):
+    if not request.user.is_authenticated:
+        return render(request, 'loginpage.html')
+
+    customer = get_object_or_404(Customer, id=customer_id)
+    products = Product.objects.all()
+
+    if request.method == 'POST':
+        product_id = request.POST.get('product')
+        quantity = int(request.POST.get('quantity', 1))
+
+        product = get_object_or_404(Product, id=product_id)
+        ordernumber = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+        # Varmistetaan, että varastossa on tarpeeksi
+        if product.unitsinstock < quantity:
+            messages.error(request, "Not enough units in stock!")
+            return redirect('addorder', customer_id=customer.id)
+
+        Order.objects.create(
+            ordernumber=ordernumber,
+            customer=customer,
+            product=product,
+            quantity=quantity,
+            unitprice=product.unitprice,
+            user=request.user
+        )
+
+        # Päivitetään varastosaldo
+        product.unitsinstock -= quantity
+        product.save()
+
+        return redirect('customer_orders', customer_id=customer.id)
+
+    return render(request, 'add-order.html', {
+        'customer': customer,
+        'products': products,
+    })
+
+
+def delete_order(request, id):
+    order = get_object_or_404(Order, id=id)
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('customer_orders', customer_id=order.customer.id)
+
+    if request.method == 'POST':
+        order.delete()
+        return redirect('customer_orders', customer_id=order.customer.id)
+
+    return render(request, 'confirmdeleteorder.html', {'order': order})
+
+def customer_orders(request, customer_id):
+    if not request.user.is_authenticated:
+        return render(request, 'loginpage.html')
+
+    customer = get_object_or_404(Customer, id=customer_id)
+    orders = Order.objects.filter(customer=customer)
+
+    return render(request, 'customer_orders.html', {
+        'customer': customer,
+        'orders': orders
+    })
